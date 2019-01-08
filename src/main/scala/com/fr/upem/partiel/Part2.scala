@@ -50,6 +50,12 @@ object Part2 {
     def getType : String = "Purshase"
   }
 
+  case class Withdrawal(amount:Double, date :Date) extends Transaction{
+    override def getAmount: Double = amount
+    override def getDate : Date = date
+    def getType : String = "Purshase"
+  }
+
   trait Check extends Transaction {
     override def getAmount: Double
     override def getDate : Date
@@ -82,13 +88,14 @@ object Part2 {
 
     sealed
     case class BankAccount(transactions: Map[Int, Transaction]) {
-       def addTransaction(id : Int,amount: Double, date: Date) = Purchase(amount,date)::transactions.toList
+       def addTransaction(id : Int,amount: Double, date: Date) = (id,Purchase(amount,date))::transactions.toList
 
       def addTransaction(id: Int,amount:Double,date:Date,categorize:String) = categorize match {
-        case "Salary" => Salary(amount,date)::transactions.toList
-        case "Purchase" => Purchase(amount,date)::transactions.toList
-        case "checkPayeent" => CheckPayement(amount,date)::transactions.toList
-        case "checkDeposit" => CheckDeposit(amount,date)::transactions.toList
+        case "Salary" => (id,Salary(amount,date))::transactions.toList
+        case "Purchase" => (id,Purchase(amount,date))::transactions.toList
+        case "Withdrawal" => (id,Withdrawal(amount,date))::transactions.toList
+        case "checkPayeent" => (id,CheckPayement(amount,date))::transactions.toList
+        case "checkDeposit" => (id,CheckDeposit(amount,date))::transactions.toList
       }
 
       def categorize(idTransaction:Int, categorize:String) =  categorize match {
@@ -103,12 +110,16 @@ object Part2 {
     // - Create an empty account
     val bankAccount = BankAccount(Map.empty)
     // - Add a transaction with id 1 of amount -13 (and any date)
-    bankAccount.addTransaction(-13,Date(12,12,2002))
+    bankAccount.addTransaction(1,-13,Date(12,12,2002))
     // - Add a transaction with id 2 of amount -50 (and any date)
+    bankAccount.addTransaction(2,-50,Date(12,12,2002))
     // - Add a check payment with id 3 of amount 650 (and any date)
+    bankAccount.addTransaction(3,-650,Date(12,12,2002))
     // - Categorize the second transaction (id "2") as a withdrawal
+    bankAccount.categorize(2,"Withdrawal")
     // - (Re)categorize the third transaction (id "3") as check deposit
-    //
+    bankAccount.categorize(3,"checkDeposit")
+    // - (Re)categorize the third transaction
     // help: After the above operations the bank account should hold:
     // TransactionId(1) -> (Transaction(1, -13, date), None)
     // TransactionId(2) -> (Transaction(2, -50, date), Some(Withdrawal))
@@ -121,7 +132,7 @@ object Part2 {
     // Amounts do not need to be formatted, write dates in any valid format (timestamp, ISO-8601 ...)
     /* def exportAsCSV(bankAccount: BankAccount) : String = bankAccount.transactions.toList.zipWithIndex match {
       case Nil => ""
-      case (i,x) => s"$i,$x.."
+      case (i,x) => s"$i,$x"
   }*/
 
     // Example output:
